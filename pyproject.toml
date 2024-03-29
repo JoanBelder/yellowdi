@@ -1,0 +1,23 @@
+[project]
+name = "YellowDI"
+description = "A small dependency injection container library for Python"
+version = "0.1"
+requires-python = ">=3.10"
+authors = [
+  {name = "Joan Belder"}
+]
+readme = "README.md"
+license = "License :: OSI Approved :: BSD License"
+
+
+[tool.mypy]
+exclude = ["venv"]
+
+[tool.coverage.run]
+branch = true
+source = ["."]
+
+[tool.coverage.report]
+partial_branches = [
+    "with pytest.raises\\(.+\\):"
+]
