@@ -1,8 +1,8 @@
-from typing import Callable, TypedDict, Any, Literal
+from typing import Callable, TypedDict, Any, Literal, Annotated
 
 import pytest
 
-from yellowdi import Container, ResolveError
+from yellowdi import Container, ResolveError, Token
 
 
 class Call(TypedDict):
@@ -25,21 +25,18 @@ class record_calls:
         return self._function(*args, **kwargs)
 
 
-class ForwardReferent:
-    pass
+class ForwardReferent: ...
 
 
 def test_resolve_auto_no_dependencies() -> None:
-    class T:
-        pass
+    class T: ...
 
     container = Container()
     assert isinstance(container.resolve(T), T)
 
 
-def test_resolve_with_register() -> None:
-    class T:
-        pass
+def test_resolve_with_register_invokes_the_factory() -> None:
+    class T: ...
 
     container = Container()
 
@@ -54,13 +51,12 @@ def test_resolve_with_register() -> None:
 
 
 def test_resolve_with_register_value() -> None:
-    class T:
-        pass
+    class T: ...
 
     container = Container()
     instance = T()
     container.register_value(T, instance)
-    assert container.resolve(T) == instance
+    assert container.resolve(T) is instance
 
 
 def test_cannot_resolve_when_type_is_missing() -> None:
@@ -75,8 +71,7 @@ def test_cannot_resolve_when_type_is_missing() -> None:
 
 def test_can_resolve_when_type_is_missing_but_default_value_exists() -> None:
     class T:
-        def __init__(self, _a=None):
-            pass
+        def __init__(self, _a=None): ...
 
     container = Container()
     assert isinstance(container.resolve(T), T)
@@ -84,8 +79,16 @@ def test_can_resolve_when_type_is_missing_but_default_value_exists() -> None:
 
 def test_cannot_resolve_literals() -> None:
     class T:
-        def __init__(self, a: Literal[0]):
-            pass
+        def __init__(self, a: Literal[0]): ...
+
+    container = Container()
+    with pytest.raises(ResolveError):
+        container.resolve(T)
+
+
+def test_cannot_resolve_literals_as_annotated() -> None:
+    class T:
+        def __init__(self, a: Annotated[Literal[0], ""]): ...
 
     container = Container()
     with pytest.raises(ResolveError):
@@ -93,8 +96,7 @@ def test_cannot_resolve_literals() -> None:
 
 
 def test_resolve_dependency_chain() -> None:
-    class Registered:
-        pass
+    class Registered: ...
 
     class Inner:
         def __init__(self, registered: Registered):
@@ -115,6 +117,14 @@ def test_resolve_dependency_chain() -> None:
 def test_resolve_module_forward_referred_class() -> None:
     class T:
         def __init__(self, registered: "ForwardReferent"):
+            self.registered = registered
+
+    assert isinstance(Container().resolve(T).registered, ForwardReferent)
+
+
+def test_resolve_module_forward_referred_class_annotated() -> None:
+    class T:
+        def __init__(self, registered: Annotated["ForwardReferent", ""]):
             self.registered = registered
 
     assert isinstance(Container().resolve(T).registered, ForwardReferent)
@@ -141,16 +151,14 @@ def test_resolve_module_local_referent_fails() -> None:
         def __init__(self, registered: "LocalReferent"):
             self.registered = registered
 
-    class LocalReferent:
-        pass
+    class LocalReferent: ...
 
     with pytest.raises(ResolveError):
         Container().resolve(T)
 
 
 def test_resolve_with_parameters() -> None:
-    class Inner:
-        pass
+    class Inner: ...
 
     class T:
         def __init__(self, a, /, b, *args, c, inner_from_container: Inner, **kwargs):
@@ -176,14 +184,11 @@ def test_resolve_with_parameters() -> None:
 
 
 def test_can_resolve_registered_class_with_metaclass() -> None:
-    class Meta(type):
-        pass
+    class Meta(type): ...
 
-    class Base(metaclass=Meta):
-        pass
+    class Base(metaclass=Meta): ...
 
-    class Child(Base):
-        pass
+    class Child(Base): ...
 
     container = Container()
     container.register(Child, Child)
@@ -191,14 +196,11 @@ def test_can_resolve_registered_class_with_metaclass() -> None:
 
 
 def test_cannot_auto_resolve_metaclassed_objects() -> None:
-    class Meta(type):
-        pass
+    class Meta(type): ...
 
-    class Base(metaclass=Meta):
-        pass
+    class Base(metaclass=Meta): ...
 
-    class Child(Base):
-        pass
+    class Child(Base): ...
 
     container = Container()
     with pytest.raises(ResolveError):
@@ -207,13 +209,55 @@ def test_cannot_auto_resolve_metaclassed_objects() -> None:
 
 def test_can_register_protocols():
     class Protocol:
-        def something(self):
-            pass
+        def something(self): ...
 
     class Implementer:
-        def something(self):
-            pass
+        def something(self): ...
 
     container = Container()
     container.register_protocol(Protocol, Implementer)
     assert isinstance(container.resolve(Protocol), Implementer)
+
+
+def test_can_resolve_annotated() -> None:
+    test_value = "abcdefgh"
+
+    class T:
+        def __init__(self, resolved_value: Annotated[Any, Token("A")]):
+            self.resolved_value = resolved_value
+
+    container = Container()
+    container.register_value(Token("A"), test_value)
+    resolved_instance = container.resolve(T)
+
+    assert isinstance(resolved_instance, T)
+    assert resolved_instance.resolved_value == test_value
+
+
+def test_will_fallback_to_type_when_token_is_unknown() -> None:
+    class Inner: ...
+
+    class T:
+        def __init__(self, resolved_value: Annotated[Inner, Token("A")]):
+            self.resolved_value = resolved_value
+
+    resolved_instance = Container().resolve(T)
+
+    assert isinstance(resolved_instance, T)
+    assert isinstance(resolved_instance.resolved_value, Inner)
+
+
+def test_will_fallback_to_first_known_token() -> None:
+    class T:
+        def __init__(
+            self, resolved_value: Annotated[Any, Token("A"), Token("B"), Token("C")]
+        ):
+            self.resolved_value = resolved_value
+
+    container = Container()
+    container.register_value(Token("B"), "b")
+    container.register_value(Token("C"), "c")
+    resolved_instance = container.resolve(T)
+
+    assert isinstance(resolved_instance, T)
+    assert resolved_instance.resolved_value == "b"
