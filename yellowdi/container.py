@@ -2,6 +2,7 @@ import inspect
 import typing
 from inspect import Parameter
 from typing import TypeVar, Callable, Literal, ParamSpec
+from collections.abc import Hashable
 
 T = TypeVar("T")
 P = ParamSpec("P")
@@ -17,7 +18,7 @@ class Container:
         self._registrations = {}
 
     def resolve(self, _type: type[T], *args: P.args, **kwargs: P.kwargs) -> T:
-        if not isinstance(_type, typing.Hashable):
+        if not isinstance(_type, Hashable):
             raise ResolveError("Can only resolve classes")
         if not inspect.isclass(_type):
             raise ResolveError("Can only resolve classes")
@@ -74,3 +75,6 @@ class Container:
 
     def register(self, _type: type[T], factory: Callable[[], T]) -> None:
         self._registrations[_type] = factory
+
+    def register_protocol(self, _type: type[T], value: type[T]) -> None:
+        self.register(_type, lambda: self.resolve(value))

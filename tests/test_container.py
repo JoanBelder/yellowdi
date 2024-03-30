@@ -175,7 +175,22 @@ def test_resolve_with_parameters() -> None:
     }
 
 
-def test_cannot_resolve_metaclassed_objects() -> None:
+def test_can_resolve_registered_class_with_metaclass() -> None:
+    class Meta(type):
+        pass
+
+    class Base(metaclass=Meta):
+        pass
+
+    class Child(Base):
+        pass
+
+    container = Container()
+    container.register(Child, Child)
+    assert isinstance(container.resolve(Child), Child)
+
+
+def test_cannot_auto_resolve_metaclassed_objects() -> None:
     class Meta(type):
         pass
 
@@ -188,3 +203,17 @@ def test_cannot_resolve_metaclassed_objects() -> None:
     container = Container()
     with pytest.raises(ResolveError):
         container.resolve(Child)
+
+
+def test_can_register_protocols():
+    class Protocol:
+        def something(self):
+            pass
+
+    class Implementer:
+        def something(self):
+            pass
+
+    container = Container()
+    container.register_protocol(Protocol, Implementer)
+    assert isinstance(container.resolve(Protocol), Implementer)
