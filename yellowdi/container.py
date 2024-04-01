@@ -39,6 +39,9 @@ class Token:
     def __class_getitem__(cls, item: str) -> "Token":
         return cls(item)
 
+    def __reduce__(self) -> tuple:
+        return Token, (self.name,), {}
+
 
 class Container:
     def __init__(self):
