@@ -118,5 +118,5 @@ class Container:
     def register(self, _type: type[T] | Token, factory: Callable[[], T]) -> None:
         self._registrations[_type] = factory
 
-    def register_protocol(self, _type: type[T], value: type[T]) -> None:
-        self.register(_type, lambda: self.resolve(value))
+    def register_alias(self, _type: type[T], alias: type[T]) -> None:
+        self.register(_type, lambda: self.resolve(alias))

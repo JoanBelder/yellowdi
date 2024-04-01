@@ -207,7 +207,7 @@ def test_cannot_auto_resolve_metaclassed_objects() -> None:
         container.resolve(Child)
 
 
-def test_can_register_protocols():
+def test_can_register_aliases():
     class Protocol:
         def something(self): ...
 
@@ -215,7 +215,7 @@ def test_can_register_protocols():
         def something(self): ...
 
     container = Container()
-    container.register_protocol(Protocol, Implementer)
+    container.register_alias(Protocol, Implementer)
     assert isinstance(container.resolve(Protocol), Implementer)
 
 

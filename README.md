@@ -64,8 +64,16 @@ or consider using `register_value` instead.
 def example_factory():
    return someclass_instance
 
-yellowdi.register(SomeClass, example_factory)
+yellowdi.register(SomeClass, example_factory)  # will call the factory
+yellowdi.register(SomeClass, example_factory)  # will call the factory again
 ```
+
+
+#### `register_alias(type_: Type, alias: Type) -> None`
+Register an alias type. This is mostly useful for binding
+[abstract base classes](https://docs.python.org/3/library/abc.html#abc.ABC) or 
+[protocols](https://docs.python.org/3/library/typing.html#typing.Protocol) to a specific implementation.
+
 
 #### `resolve(type_: type[T], *args, **kwargs) -> T`
 Starts the resolution of a class. If the class is known already it will use the registered value. In any other case the
