@@ -123,3 +123,9 @@ class Container:
 
     def register_alias(self, _type: type[T], alias: type[T]) -> None:
         self.register(_type, lambda: self.resolve(alias))
+
+    def __contains__(self, item) -> bool:
+        return item in self._registrations
+
+    def clear(self):
+        self._registrations.clear()

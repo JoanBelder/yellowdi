@@ -90,6 +90,23 @@ Resolution of arguments for an object or call will be done in the following orde
 4. Based on the type annotation of the argument.
 5. If none of the above, an error is given.
 
+#### clear() -> None
+This will clear the container, and set it to a new state. I.e. `yellowdi.clear()` will clear the globally provided
+container.
+
+#### __contains__(item) -> bool
+You can use the `in` operator to see whether a type is known to the container. 
+
+```python
+
+class T: ...
+
+yellowdi.register(T, lambda: T())
+
+T in yellowdi  # True
+Token("A") in yellowdi  # False
+```
+
 ### `Token(name: str|None)`
 Tokens represent injection tokens. They can be used as values for `container.register_value` and `container.register`.
 Constructing a token with the same name twice will result in the same token. Which is making it more convenient for 

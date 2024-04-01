@@ -261,3 +261,28 @@ def test_will_fallback_to_first_known_token() -> None:
 
     assert isinstance(resolved_instance, T)
     assert resolved_instance.resolved_value == "b"
+
+
+def test_can_see_registered_values():
+    class A: ...
+
+    class B: ...
+
+    class C: ...
+
+    class D: ...
+
+    container = Container()
+    container.register_alias(A, B)
+    container.register_value(B, B())
+    container.register(C, C)
+
+    assert A in container
+    assert B in container
+    assert C in container
+    assert D not in container
+
+    container.clear()
+    assert A not in container
+    assert B not in container
+    assert C not in container
