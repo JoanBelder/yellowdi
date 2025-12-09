@@ -7,8 +7,23 @@ authors = [
   {name = "Joan Belder"}
 ]
 readme = "README.md"
-license = "License :: OSI Approved :: BSD License"
+license = "BSD-3-Clause"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
 
+[dependency-groups]
+dev = [
+    "mypy==1.9.0",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.14.8",
+]
 
 [tool.mypy]
 exclude = ["venv"]
@@ -21,3 +36,4 @@ source = ["."]
 partial_branches = [
     "with pytest.raises\\(.+\\):"
 ]
+
